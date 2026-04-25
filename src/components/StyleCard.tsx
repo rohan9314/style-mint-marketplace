@@ -56,7 +56,7 @@ export const ArtStyleCard = ({ style }: { style: ArtStyle }) => (
       <div className="absolute inset-0 bg-foreground/85 text-background opacity-0 group-hover:opacity-100 transition-smooth p-5 flex flex-col justify-center">
         <p className="text-sm leading-relaxed">{style.longDescription}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {style.tones.map((t) => (
+          {(style.tones ?? []).map((t) => (
             <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-background/15 border border-background/25">
               {t}
             </span>
@@ -103,7 +103,7 @@ export const WritingStyleCard = ({ style }: { style: WritingStyle }) => {
         <div className="absolute inset-0 bg-foreground/85 text-background opacity-0 group-hover:opacity-100 transition-smooth p-5 flex flex-col justify-center">
           <p className="text-sm leading-relaxed">{style.longDescription}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {style.tones.map((t) => (
+            {(style.tones ?? []).map((t) => (
               <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-background/15 border border-background/25">
                 {t}
               </span>
