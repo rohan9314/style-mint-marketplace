@@ -1,8 +1,22 @@
+export type Tone =
+  | "Cozy"
+  | "Dark"
+  | "Funny"
+  | "Epic"
+  | "Emotional"
+  | "Action"
+  | "Magical";
+
+export type Tag = "Popular" | "Trending" | "Classic" | "New" | "Top Rated";
+
 export type ArtStyle = {
   id: string;
   title: string;
+  type: "Art";
   description: string;
-  popularity: "Trending" | "Popular" | "New" | "Top Rated";
+  longDescription: string;
+  tag: Tag;
+  tones: Tone[];
   uses: number;
   rating: number;
   gradient: string;
@@ -11,36 +25,245 @@ export type ArtStyle = {
 export type WritingStyle = {
   id: string;
   title: string;
+  type: "Writing";
   description: string;
-  popularity: "Trending" | "Popular" | "New" | "Top Rated";
+  longDescription: string;
+  tag: Tag;
+  tones: Tone[];
   uses: number;
   rating: number;
-  icon: string; // lucide icon name
-  accent: string; // tailwind gradient classes
+  icon: string;
+  accent: string;
 };
 
+export const TONES: Tone[] = [
+  "Cozy",
+  "Dark",
+  "Funny",
+  "Epic",
+  "Emotional",
+  "Action",
+  "Magical",
+];
+
 export const artStyles: ArtStyle[] = [
-  { id: "fantasy", title: "Fantasy Illustration", description: "Mystical realms, ethereal lighting, painterly detail.", popularity: "Trending", uses: 18420, rating: 4.9, gradient: "from-violet-300 via-fuchsia-300 to-rose-300" },
-  { id: "anime", title: "Anime", description: "Vibrant cel-shaded characters with expressive eyes.", popularity: "Popular", uses: 24310, rating: 4.8, gradient: "from-pink-300 via-rose-300 to-orange-300" },
-  { id: "portrait", title: "Realistic Portrait", description: "Lifelike faces with cinematic light and depth.", popularity: "Top Rated", uses: 15280, rating: 4.95, gradient: "from-amber-200 via-orange-300 to-red-300" },
-  { id: "cyberpunk", title: "Cyberpunk", description: "Neon-soaked dystopias, chrome, and rain.", popularity: "Trending", uses: 12450, rating: 4.85, gradient: "from-fuchsia-400 via-purple-500 to-cyan-400" },
-  { id: "watercolor", title: "Watercolor", description: "Soft washes and bleeding pigments, hand-painted.", popularity: "Popular", uses: 9870, rating: 4.7, gradient: "from-sky-200 via-teal-200 to-emerald-200" },
-  { id: "minimal", title: "Minimalist Design", description: "Clean lines, negative space, modern simplicity.", popularity: "New", uses: 4210, rating: 4.6, gradient: "from-slate-100 via-stone-200 to-zinc-300" },
-  { id: "comic", title: "Comic Book", description: "Bold ink, halftones, and dynamic panels.", popularity: "Popular", uses: 11200, rating: 4.75, gradient: "from-yellow-300 via-orange-400 to-red-400" },
-  { id: "surreal", title: "Surrealism", description: "Dreamlike compositions that defy reality.", popularity: "Top Rated", uses: 8120, rating: 4.9, gradient: "from-indigo-300 via-purple-400 to-pink-400" },
-  { id: "pixel", title: "Pixel Art", description: "Retro 8-bit charm with modern polish.", popularity: "Trending", uses: 7340, rating: 4.7, gradient: "from-emerald-300 via-cyan-400 to-blue-400" },
-  { id: "vintage", title: "Vintage Poster", description: "Mid-century print, grain, and rich palettes.", popularity: "New", uses: 3890, rating: 4.65, gradient: "from-amber-300 via-rose-300 to-teal-300" },
+  {
+    id: "ranking-of-kings",
+    title: "Ranking of Kings",
+    type: "Art",
+    description: "Soft storybook anime with rounded characters and painterly backgrounds.",
+    longDescription:
+      "Soft storybook anime visuals, rounded characters, emotional facial expressions, whimsical medieval fantasy atmosphere, and painterly watercolor backgrounds.",
+    tag: "Trending",
+    tones: ["Cozy", "Emotional", "Magical"],
+    uses: 18420,
+    rating: 4.9,
+    gradient: "from-amber-200 via-rose-200 to-emerald-200",
+  },
+  {
+    id: "spider-verse",
+    title: "Spider-Verse",
+    type: "Art",
+    description: "Comic-book energy with halftone textures and dynamic motion.",
+    longDescription:
+      "Comic-book energy, halftone textures, bold saturated colors, dynamic motion lines, and a layered animation feel that breaks the frame.",
+    tag: "Popular",
+    tones: ["Action", "Epic", "Funny"],
+    uses: 24310,
+    rating: 4.92,
+    gradient: "from-fuchsia-400 via-red-400 to-cyan-400",
+  },
+  {
+    id: "studio-ghibli",
+    title: "Studio Ghibli",
+    type: "Art",
+    description: "Warm hand-painted scenery with magical realism and nostalgic charm.",
+    longDescription:
+      "Warm hand-painted scenery, magical realism, cozy environments, expressive nature, soft skies, and that unmistakable nostalgic charm.",
+    tag: "Classic",
+    tones: ["Cozy", "Magical", "Emotional"],
+    uses: 31280,
+    rating: 4.97,
+    gradient: "from-sky-200 via-emerald-200 to-yellow-200",
+  },
+  {
+    id: "arcane",
+    title: "Arcane",
+    type: "Art",
+    description: "Painterly realism, dramatic lighting, cinematic fantasy-industrial mood.",
+    longDescription:
+      "Painterly realism with dramatic lighting, rich textured brushwork, and a cinematic fantasy-industrial mood that feels both gritty and beautiful.",
+    tag: "Top Rated",
+    tones: ["Dark", "Epic", "Emotional"],
+    uses: 15280,
+    rating: 4.95,
+    gradient: "from-indigo-500 via-purple-500 to-rose-400",
+  },
+  {
+    id: "adventure-time",
+    title: "Adventure Time",
+    type: "Art",
+    description: "Simple playful shapes with surreal humor and quirky characters.",
+    longDescription:
+      "Simple playful shapes, surreal humor, colorful candy-bright fantasy landscapes, and quirky character design with a noodly hand-drawn feel.",
+    tag: "Popular",
+    tones: ["Funny", "Magical", "Cozy"],
+    uses: 12450,
+    rating: 4.78,
+    gradient: "from-pink-300 via-sky-300 to-violet-300",
+  },
+  {
+    id: "attack-on-titan",
+    title: "Attack on Titan",
+    type: "Art",
+    description: "Dark militaristic tone with dramatic scale and gritty atmosphere.",
+    longDescription:
+      "Dark militaristic tone, dramatic scale, gritty atmosphere, sharp linework, and tension-heavy visual storytelling that feels apocalyptic.",
+    tag: "Trending",
+    tones: ["Dark", "Action", "Epic"],
+    uses: 19870,
+    rating: 4.88,
+    gradient: "from-stone-500 via-zinc-700 to-red-700",
+  },
+  {
+    id: "one-piece",
+    title: "One Piece",
+    type: "Art",
+    description: "Exaggerated character design and a vibrant adventure world.",
+    longDescription:
+      "Exaggerated character design, vibrant adventure world, playful chaos, and big expressive emotion across sun-drenched seas.",
+    tag: "Popular",
+    tones: ["Funny", "Action", "Epic"],
+    uses: 21200,
+    rating: 4.82,
+    gradient: "from-amber-300 via-orange-400 to-sky-400",
+  },
+  {
+    id: "naruto",
+    title: "Naruto",
+    type: "Art",
+    description: "Shonen action framing with energetic combat and ninja fantasy tone.",
+    longDescription:
+      "Shonen action framing, energetic combat poses, emotional rivalry themes, and a ninja fantasy tone with bold motion and chakra glow.",
+    tag: "Classic",
+    tones: ["Action", "Emotional", "Epic"],
+    uses: 17340,
+    rating: 4.84,
+    gradient: "from-orange-400 via-amber-300 to-blue-400",
+  },
 ];
 
 export const writingStyles: WritingStyle[] = [
-  { id: "kids", title: "Children's Story", description: "Warm, whimsical tales perfect for bedtime.", popularity: "Popular", uses: 9120, rating: 4.8, icon: "Baby", accent: "from-pink-200 to-yellow-200" },
-  { id: "horror", title: "Horror Story", description: "Atmospheric dread and slow-burn tension.", popularity: "Trending", uses: 7430, rating: 4.85, icon: "Ghost", accent: "from-slate-300 to-purple-400" },
-  { id: "scifi", title: "Sci-Fi Novel", description: "Speculative worlds, bold ideas, sharp prose.", popularity: "Top Rated", uses: 11240, rating: 4.9, icon: "Rocket", accent: "from-cyan-300 to-blue-400" },
-  { id: "blog", title: "Motivational Blog", description: "Energetic, actionable, and easy to share.", popularity: "Popular", uses: 8210, rating: 4.7, icon: "Flame", accent: "from-orange-300 to-red-400" },
-  { id: "email", title: "Professional Email", description: "Concise, polite, and ready to send.", popularity: "Trending", uses: 19320, rating: 4.85, icon: "Mail", accent: "from-mint-200 to-emerald-300" },
-  { id: "marketing", title: "Marketing Copy", description: "Punchy hooks that convert browsers to buyers.", popularity: "Top Rated", uses: 14210, rating: 4.9, icon: "Megaphone", accent: "from-fuchsia-300 to-rose-400" },
-  { id: "poetry", title: "Poetry", description: "Lyrical verse with rhythm and imagery.", popularity: "New", uses: 4120, rating: 4.75, icon: "Feather", accent: "from-violet-300 to-indigo-400" },
-  { id: "fantasy-adv", title: "Fantasy Adventure", description: "Epic quests, magic systems, vivid worlds.", popularity: "Popular", uses: 10120, rating: 4.85, icon: "Swords", accent: "from-amber-300 to-emerald-400" },
-  { id: "mystery", title: "Mystery Thriller", description: "Twisty plots and unforgettable reveals.", popularity: "Trending", uses: 6320, rating: 4.8, icon: "Search", accent: "from-slate-400 to-blue-500" },
-  { id: "social", title: "Social Media Post", description: "Snappy captions tuned for engagement.", popularity: "Popular", uses: 22310, rating: 4.7, icon: "Hash", accent: "from-pink-300 to-purple-400" },
+  {
+    id: "harry-potter",
+    title: "Harry Potter",
+    type: "Writing",
+    description: "Magical boarding-school wonder with friendship-driven adventure.",
+    longDescription:
+      "Magical boarding-school wonder, friendship-driven adventure, whimsical worldbuilding, and mystery layered through every chapter.",
+    tag: "Classic",
+    tones: ["Magical", "Cozy", "Emotional"],
+    uses: 32120,
+    rating: 4.96,
+    icon: "Wand2",
+    accent: "from-amber-300 to-purple-500",
+  },
+  {
+    id: "percy-jackson",
+    title: "Percy Jackson",
+    type: "Writing",
+    description: "Fast-paced humor with a sarcastic narrator and modern myth.",
+    longDescription:
+      "Fast-paced humor, modern mythological setting, a sarcastic first-person narrator, and youthful adventure full of gods and monsters.",
+    tag: "Popular",
+    tones: ["Funny", "Action", "Magical"],
+    uses: 14210,
+    rating: 4.85,
+    icon: "Zap",
+    accent: "from-cyan-300 to-blue-500",
+  },
+  {
+    id: "hunger-games",
+    title: "The Hunger Games",
+    type: "Writing",
+    description: "High-stakes survival tension and dystopian society critique.",
+    longDescription:
+      "High-stakes survival tension, dystopian society critique, and an emotionally intense first-person perspective that never lets up.",
+    tag: "Trending",
+    tones: ["Dark", "Action", "Emotional"],
+    uses: 11240,
+    rating: 4.88,
+    icon: "Flame",
+    accent: "from-orange-400 to-rose-600",
+  },
+  {
+    id: "sherlock-holmes",
+    title: "Sherlock Holmes",
+    type: "Writing",
+    description: "Logical deduction and elegant intelligence through clues.",
+    longDescription:
+      "Logical deduction, mysteries unraveling thread by thread, elegant intelligence, and suspense built from the smallest clues.",
+    tag: "Classic",
+    tones: ["Dark", "Emotional"],
+    uses: 9120,
+    rating: 4.9,
+    icon: "Search",
+    accent: "from-slate-400 to-stone-700",
+  },
+  {
+    id: "game-of-thrones",
+    title: "Game of Thrones",
+    type: "Writing",
+    description: "Political intrigue, morally gray characters, shifting POVs.",
+    longDescription:
+      "Political intrigue, morally gray characters, large-scale worldbuilding, and shifting perspectives across rival houses.",
+    tag: "Top Rated",
+    tones: ["Dark", "Epic", "Action"],
+    uses: 16320,
+    rating: 4.93,
+    icon: "Crown",
+    accent: "from-red-500 to-zinc-800",
+  },
+  {
+    id: "wimpy-kid",
+    title: "Diary of a Wimpy Kid",
+    type: "Writing",
+    description: "Humorous everyday problems told in a casual youth voice.",
+    longDescription:
+      "Humorous everyday problems, a relatable youth perspective, casual diary voice, and comedic exaggeration of school-life chaos.",
+    tag: "Popular",
+    tones: ["Funny", "Cozy"],
+    uses: 8210,
+    rating: 4.7,
+    icon: "Notebook",
+    accent: "from-yellow-300 to-orange-400",
+  },
+  {
+    id: "dr-seuss",
+    title: "Dr. Seuss",
+    type: "Writing",
+    description: "Rhythmic playful language with whimsical nonsense.",
+    longDescription:
+      "Rhythmic, playful language, whimsical nonsense words, and memorable moral simplicity wrapped in singsong rhyme.",
+    tag: "Classic",
+    tones: ["Funny", "Cozy", "Magical"],
+    uses: 6120,
+    rating: 4.8,
+    icon: "Feather",
+    accent: "from-pink-300 to-cyan-400",
+  },
+  {
+    id: "tolkien",
+    title: "Tolkien",
+    type: "Writing",
+    description: "Epic mythic tone with deep lore and grand journeys.",
+    longDescription:
+      "Epic mythic tone, deep invented lore, grand journeys across continents, and poetic ancient-feeling language.",
+    tag: "Top Rated",
+    tones: ["Epic", "Magical", "Emotional"],
+    uses: 20120,
+    rating: 4.95,
+    icon: "Mountain",
+    accent: "from-emerald-500 to-amber-600",
+  },
 ];
