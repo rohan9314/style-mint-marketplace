@@ -1,3 +1,20 @@
+import studioGhibliImg from "@/assets/styles/studio-ghibli.jpg";
+import spiderVerseImg from "@/assets/styles/spider-verse.jpg";
+import rankingOfKingsImg from "@/assets/styles/ranking-of-kings.jpg";
+import arcaneImg from "@/assets/styles/arcane.jpg";
+import adventureTimeImg from "@/assets/styles/adventure-time.jpg";
+import attackOnTitanImg from "@/assets/styles/attack-on-titan.jpg";
+import onePieceImg from "@/assets/styles/one-piece.jpg";
+import narutoImg from "@/assets/styles/naruto.jpg";
+import harryPotterImg from "@/assets/styles/harry-potter.jpg";
+import percyJacksonImg from "@/assets/styles/percy-jackson.jpg";
+import hungerGamesImg from "@/assets/styles/hunger-games.jpg";
+import sherlockHolmesImg from "@/assets/styles/sherlock-holmes.jpg";
+import gameOfThronesImg from "@/assets/styles/game-of-thrones.jpg";
+import wimpyKidImg from "@/assets/styles/wimpy-kid.jpg";
+import drSeussImg from "@/assets/styles/dr-seuss.jpg";
+import tolkienImg from "@/assets/styles/tolkien.jpg";
+
 export type Tone =
   | "Cozy"
   | "Dark"
