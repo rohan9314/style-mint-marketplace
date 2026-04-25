@@ -1,3 +1,20 @@
+import studioGhibliImg from "@/assets/styles/studio-ghibli.jpg";
+import spiderVerseImg from "@/assets/styles/spider-verse.jpg";
+import rankingOfKingsImg from "@/assets/styles/ranking-of-kings.jpg";
+import arcaneImg from "@/assets/styles/arcane.jpg";
+import adventureTimeImg from "@/assets/styles/adventure-time.jpg";
+import attackOnTitanImg from "@/assets/styles/attack-on-titan.jpg";
+import onePieceImg from "@/assets/styles/one-piece.jpg";
+import narutoImg from "@/assets/styles/naruto.jpg";
+import harryPotterImg from "@/assets/styles/harry-potter.jpg";
+import percyJacksonImg from "@/assets/styles/percy-jackson.jpg";
+import hungerGamesImg from "@/assets/styles/hunger-games.jpg";
+import sherlockHolmesImg from "@/assets/styles/sherlock-holmes.jpg";
+import gameOfThronesImg from "@/assets/styles/game-of-thrones.jpg";
+import wimpyKidImg from "@/assets/styles/wimpy-kid.jpg";
+import drSeussImg from "@/assets/styles/dr-seuss.jpg";
+import tolkienImg from "@/assets/styles/tolkien.jpg";
+
 export type Tone =
   | "Cozy"
   | "Dark"
@@ -20,6 +37,7 @@ export type ArtStyle = {
   uses: number;
   rating: number;
   gradient: string;
+  image: string;
 };
 
 export type WritingStyle = {
@@ -34,6 +52,7 @@ export type WritingStyle = {
   rating: number;
   icon: string;
   accent: string;
+  image: string;
 };
 
 export const TONES: Tone[] = [
@@ -59,6 +78,7 @@ export const artStyles: ArtStyle[] = [
     uses: 18420,
     rating: 4.9,
     gradient: "from-amber-200 via-rose-200 to-emerald-200",
+    image: rankingOfKingsImg,
   },
   {
     id: "spider-verse",
@@ -72,6 +92,7 @@ export const artStyles: ArtStyle[] = [
     uses: 24310,
     rating: 4.92,
     gradient: "from-fuchsia-400 via-red-400 to-cyan-400",
+    image: spiderVerseImg,
   },
   {
     id: "studio-ghibli",
@@ -85,6 +106,7 @@ export const artStyles: ArtStyle[] = [
     uses: 31280,
     rating: 4.97,
     gradient: "from-sky-200 via-emerald-200 to-yellow-200",
+    image: studioGhibliImg,
   },
   {
     id: "arcane",
@@ -98,6 +120,7 @@ export const artStyles: ArtStyle[] = [
     uses: 15280,
     rating: 4.95,
     gradient: "from-indigo-500 via-purple-500 to-rose-400",
+    image: arcaneImg,
   },
   {
     id: "adventure-time",
@@ -111,6 +134,7 @@ export const artStyles: ArtStyle[] = [
     uses: 12450,
     rating: 4.78,
     gradient: "from-pink-300 via-sky-300 to-violet-300",
+    image: adventureTimeImg,
   },
   {
     id: "attack-on-titan",
@@ -124,6 +148,7 @@ export const artStyles: ArtStyle[] = [
     uses: 19870,
     rating: 4.88,
     gradient: "from-stone-500 via-zinc-700 to-red-700",
+    image: attackOnTitanImg,
   },
   {
     id: "one-piece",
@@ -137,6 +162,7 @@ export const artStyles: ArtStyle[] = [
     uses: 21200,
     rating: 4.82,
     gradient: "from-amber-300 via-orange-400 to-sky-400",
+    image: onePieceImg,
   },
   {
     id: "naruto",
@@ -150,6 +176,7 @@ export const artStyles: ArtStyle[] = [
     uses: 17340,
     rating: 4.84,
     gradient: "from-orange-400 via-amber-300 to-blue-400",
+    image: narutoImg,
   },
 ];
 
@@ -167,6 +194,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.96,
     icon: "Wand2",
     accent: "from-amber-300 to-purple-500",
+    image: harryPotterImg,
   },
   {
     id: "percy-jackson",
@@ -181,6 +209,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.85,
     icon: "Zap",
     accent: "from-cyan-300 to-blue-500",
+    image: percyJacksonImg,
   },
   {
     id: "hunger-games",
@@ -195,6 +224,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.88,
     icon: "Flame",
     accent: "from-orange-400 to-rose-600",
+    image: hungerGamesImg,
   },
   {
     id: "sherlock-holmes",
@@ -209,6 +239,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.9,
     icon: "Search",
     accent: "from-slate-400 to-stone-700",
+    image: sherlockHolmesImg,
   },
   {
     id: "game-of-thrones",
@@ -223,6 +254,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.93,
     icon: "Crown",
     accent: "from-red-500 to-zinc-800",
+    image: gameOfThronesImg,
   },
   {
     id: "wimpy-kid",
@@ -237,6 +269,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.7,
     icon: "Notebook",
     accent: "from-yellow-300 to-orange-400",
+    image: wimpyKidImg,
   },
   {
     id: "dr-seuss",
@@ -251,6 +284,7 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.8,
     icon: "Feather",
     accent: "from-pink-300 to-cyan-400",
+    image: drSeussImg,
   },
   {
     id: "tolkien",
@@ -265,5 +299,6 @@ export const writingStyles: WritingStyle[] = [
     rating: 4.95,
     icon: "Mountain",
     accent: "from-emerald-500 to-amber-600",
+    image: tolkienImg,
   },
 ];
