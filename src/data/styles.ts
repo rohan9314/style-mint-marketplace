@@ -37,6 +37,7 @@ export type ArtStyle = {
   uses: number;
   rating: number;
   gradient: string;
+  image: string;
 };
 
 export type WritingStyle = {
@@ -51,6 +52,7 @@ export type WritingStyle = {
   rating: number;
   icon: string;
   accent: string;
+  image: string;
 };
 
 export const TONES: Tone[] = [
