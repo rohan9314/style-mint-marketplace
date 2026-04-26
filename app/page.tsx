@@ -1,65 +1,83 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Sparkles, ArrowRight, Coins } from "lucide-react";
+import { loadStyles } from "@/lib/store/styles";
+import { MarketplaceBrowser } from "./components/marketplace-browser";
 
-export default function Home() {
+export default async function Home() {
+  const styles = await loadStyles();
+  const marketplaceStyles = styles.map((style) => ({
+    id: style.id,
+    kind: style.kind,
+    creatorId: style.creatorId,
+    creatorName: style.creatorName,
+    title: style.title,
+    description: style.description,
+    pricePerGenerationSats: style.pricePerGenerationSats,
+  }));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="bg-gradient-soft">
+      <section className="mx-auto w-full max-w-6xl px-6 py-16 text-center md:py-24">
+        <div className="mx-auto max-w-3xl">
+          <p className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-accent px-4 py-1 text-xs font-semibold text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            Lightning-paid style marketplace
           </p>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-6xl">
+            Discover styles for
+            <br className="hidden md:block" /> anything you create
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
+            Use creator-owned art and writing styles. Pay in sats only when you
+            generate.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/create"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background px-5 py-2.5 text-sm font-semibold text-primary"
+            >
+              Combine art + writing in one story
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <MarketplaceBrowser initialStyles={marketplaceStyles} />
+
+      <section className="mx-auto w-full max-w-6xl px-6 pb-20">
+        <div className="rounded-3xl bg-gradient-primary p-8 text-primary-foreground md:p-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-90">
+            For creators
+          </p>
+          <h3 className="mt-3 text-3xl font-bold tracking-tight">
+            Publish your style and earn every generation
+          </h3>
+          <p className="mt-3 max-w-2xl text-primary-foreground/90">
+            StyleMint uses Lightning micropayments so creators get paid in sats
+            per use.
+          </p>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
+            <Coins className="h-4 w-4" />
+            Money moves instantly, globally
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/creator/studio"
+              className="inline-flex items-center gap-2 rounded-full bg-white/90 px-5 py-2.5 text-sm font-semibold text-black"
+            >
+              Upload Your Style Agent
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="#marketplace"
+              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-transparent px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Browse Marketplace
+            </a>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
