@@ -10,6 +10,8 @@ interface GenerateBody {
   prompt: string;
 }
 
+const skipL402 = process.env.SKIP_L402_DEV === "1";
+
 const handler = async (req: Request): Promise<Response> => {
   try {
     const body = (await req.json()) as GenerateBody;
@@ -76,4 +78,4 @@ const paidPOST = withPayment(
   handler,
 );
 
-export const POST = paidPOST;
+export const POST = skipL402 ? handler : paidPOST;
