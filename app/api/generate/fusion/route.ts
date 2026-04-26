@@ -10,8 +10,6 @@ interface FusionBody {
   prompt: string;
 }
 
-const skipL402 = process.env.SKIP_L402_DEV === "1";
-
 const handler = async (req: Request): Promise<Response> => {
   try {
     const body = (await req.json()) as FusionBody;
@@ -36,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
     const paymentHash = req.headers.get("x-payment-hash") ?? "unknown";
     const buyerKind = req.headers.get("x-buyer-kind") === "agent" ? "agent" : "human";
 
-    const { storyText, imageUrl, imageError } = await generateFusion({
+    const { storyText, imageUrl, imageError, pages } = await generateFusion({
       artStyle: art,
       writingStyle: writing,
       prompt: body.prompt.trim(),
@@ -77,6 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
       storyText,
       outputUrl: imageUrl,
       imageError: imageError ?? null,
+      pages,
       artStyleId: art.id,
       writingStyleId: writing.id,
       paymentHash,
@@ -112,4 +111,4 @@ const paidPOST = withPayment(
   handler,
 );
 
-export const POST = skipL402 ? handler : paidPOST;
+export const POST = paidPOST;

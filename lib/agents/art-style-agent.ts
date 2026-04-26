@@ -119,7 +119,7 @@ Return STRICT JSON, no preamble, no markdown fences:
       };
     } catch {
       if (attempt === 1) {
-        throw new Error("Claude returned invalid JSON for art style ingest.");
+        throw new Error("Gemini returned invalid JSON for art style ingest.");
       }
     }
   }
@@ -149,5 +149,22 @@ Aesthetic keywords: ${input.style.styleProfile.keywords.join(", ")}
 
 Output only the generated image.`;
 
-  return geminiGenerateImage(conditionedPrompt, referenceImageParts);
+  try {
+    return await geminiGenerateImage(conditionedPrompt, referenceImageParts);
+  } catch (error) {
+    const firstError = error instanceof Error ? error.message : String(error);
+    const noReferencePrompt = `${conditionedPrompt}
+
+If reference images cannot be used, still generate a new image that faithfully matches the described style profile.`;
+
+    try {
+      return await geminiGenerateImage(noReferencePrompt);
+    } catch (retryError) {
+      const secondError = retryError instanceof Error ? retryError.message : String(retryError);
+      throw new Error(
+        `Image generation failed with references, then failed on text-only retry. withRefs=${firstError} | textOnly=${secondError}`,
+      );
+    }
+  }
 }
+

@@ -28,13 +28,40 @@ const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models
 const IMAGE_MODELS = [
   "gemini-2.5-flash-image",
   "gemini-3.1-flash-image-preview",
-  "imagen-4.0-fast-generate-001",
 ] as const;
 
-function getApiKey(): string {
-  const key = process.env.GEMINI_API_KEY;
+function getTextApiKey(): string {
+  const candidates = [
+    process.env.GOOGLE_GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY,
+    process.env.NANO_BANANA_API_KEY,
+    process.env.GOOGLE_API_KEY,
+  ];
+  const key = candidates
+    .map((value) => value?.trim().replace(/^['"]|['"]$/g, ""))
+    .find((value) => Boolean(value));
   if (!key) {
-    throw new Error("Missing GEMINI_API_KEY.");
+    throw new Error(
+      "Missing Gemini API key. Set GOOGLE_GEMINI_API_KEY or GEMINI_API_KEY.",
+    );
+  }
+  return key;
+}
+
+function getImageApiKey(): string {
+  const candidates = [
+    process.env.NANO_BANANA_API_KEY,
+    process.env.GOOGLE_GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY,
+    process.env.GOOGLE_API_KEY,
+  ];
+  const key = candidates
+    .map((value) => value?.trim().replace(/^['"]|['"]$/g, ""))
+    .find((value) => Boolean(value));
+  if (!key) {
+    throw new Error(
+      "Missing image API key. Set NANO_BANANA_API_KEY or GOOGLE_GEMINI_API_KEY.",
+    );
   }
   return key;
 }
@@ -42,8 +69,8 @@ function getApiKey(): string {
 async function callGemini(
   model: string,
   body: Record<string, unknown>,
+  apiKey: string,
 ): Promise<GeminiResponse> {
-  const apiKey = getApiKey();
   const url = `${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
@@ -65,6 +92,7 @@ export async function geminiGenerateText(
   parts: GeminiPart[] = [],
   model = process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
 ): Promise<string> {
+  const apiKey = getTextApiKey();
   const response = await callGemini(model, {
     contents: [
       {
@@ -72,7 +100,7 @@ export async function geminiGenerateText(
         parts: [...parts, { text: prompt }],
       },
     ],
-  });
+  }, apiKey);
 
   const text =
     response.candidates?.[0]?.content?.parts
@@ -92,9 +120,16 @@ export async function geminiGenerateImage(
   parts: GeminiPart[] = [],
   model = process.env.GEMINI_IMAGE_MODEL ?? IMAGE_MODELS[0],
 ): Promise<string> {
-  const modelCandidates = Array.from(new Set([model, ...IMAGE_MODELS]));
+  const apiKey = getImageApiKey();
+  const configuredModel = process.env.GEMINI_IMAGE_MODEL?.trim();
+  const modelCandidates = (
+    configuredModel
+      ? [configuredModel]
+      : Array.from(new Set([model, ...IMAGE_MODELS]))
+  ).filter((candidate) => !candidate.toLowerCase().startsWith("imagen-"));
 
   let lastError: unknown = null;
+  const attempts: string[] = [];
 
   for (const candidate of modelCandidates) {
     try {
@@ -110,7 +145,7 @@ export async function geminiGenerateImage(
           { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
           { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
         ],
-      });
+      }, apiKey);
 
       const responseParts = response.candidates?.[0]?.content?.parts ?? [];
       const finishReason =
@@ -136,11 +171,13 @@ export async function geminiGenerateImage(
       return `data:${mimeType};base64,${data}`;
     } catch (error) {
       lastError = error;
+      const reason = error instanceof Error ? error.message : String(error);
+      attempts.push(`${candidate}: ${reason}`);
     }
   }
 
   const reason = lastError instanceof Error ? lastError.message : String(lastError);
   throw new Error(
-    `No available Gemini image model worked. Set GEMINI_IMAGE_MODEL to a supported model for your key. Last error: ${reason}`,
+    `No available Gemini image model worked. Set GEMINI_IMAGE_MODEL to a supported model for your key. Last error: ${reason}. Attempts: ${attempts.join(" || ")}`,
   );
 }

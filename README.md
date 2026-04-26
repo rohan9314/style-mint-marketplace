@@ -58,7 +58,10 @@ Create `.env.local`:
 ```env
 MDK_ACCESS_TOKEN=
 MDK_MNEMONIC=
-GEMINI_API_KEY=
+GOOGLE_GEMINI_API_KEY=
+NANO_BANANA_API_KEY=
+# Optional legacy fallback:
+# GEMINI_API_KEY=
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 # Optional for Vercel persistence (recommended in production)

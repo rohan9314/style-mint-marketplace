@@ -12,6 +12,12 @@ export interface FusionOutput {
   storyText: string;
   imageUrl: string | null;
   imageError?: string;
+  pages: Array<{
+    pageNumber: number;
+    paragraph: string;
+    imageUrl: string | null;
+    imageError?: string;
+  }>;
 }
 
 /**
@@ -24,25 +30,48 @@ export async function generateFusion(input: FusionInput): Promise<FusionOutput> 
     prompt: input.prompt,
   });
 
-  const excerpt = storyText.slice(0, 1500);
-  const artPrompt = `${input.prompt}
+  const paragraphs = storyText
+    .split(/\n\s*\n/g)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0);
+  const normalizedParagraphs = paragraphs.length > 0 ? paragraphs : [storyText.trim()];
 
-Illustrate one striking scene from this story (composition, mood, and setting — match the art style references):
+  const pages: FusionOutput["pages"] = [];
+
+  for (const [index, paragraph] of normalizedParagraphs.entries()) {
+    const pageNumber = index + 1;
+    const artPrompt = `${input.prompt}
+
+Illustrate this specific page from the story as a cinematic book illustration.
+Match the selected art style references closely.
+
+Page ${pageNumber} text:
 ---
-${excerpt}
+${paragraph.slice(0, 1800)}
 ---`;
 
-  try {
-    const imageUrl = await generateArtInStyle({
-      style: input.artStyle,
-      prompt: artPrompt,
-    });
-    return { storyText, imageUrl };
-  } catch (error) {
-    const imageError =
-      error instanceof Error
-        ? error.message
-        : "Image generation failed, but story generation succeeded.";
-    return { storyText, imageUrl: null, imageError };
+    try {
+      const imageUrl = await generateArtInStyle({
+        style: input.artStyle,
+        prompt: artPrompt,
+      });
+      pages.push({ pageNumber, paragraph, imageUrl });
+    } catch (error) {
+      const imageError =
+        error instanceof Error
+          ? error.message
+          : "Image generation failed for this page.";
+      pages.push({ pageNumber, paragraph, imageUrl: null, imageError });
+    }
   }
+
+  const firstSuccessPage = pages.find((page) => page.imageUrl);
+  const firstErrorPage = pages.find((page) => page.imageError);
+
+  return {
+    storyText,
+    imageUrl: firstSuccessPage?.imageUrl ?? null,
+    imageError: firstSuccessPage ? undefined : firstErrorPage?.imageError,
+    pages,
+  };
 }

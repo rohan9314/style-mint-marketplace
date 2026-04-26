@@ -11,6 +11,13 @@ interface ListStyle {
   pricePerGenerationSats: number;
 }
 
+interface FusionPage {
+  pageNumber: number;
+  paragraph: string;
+  imageUrl: string | null;
+  imageError?: string;
+}
+
 function formatApiErrorBody(data: unknown): string {
   if (data === null || data === undefined) {
     return "Request failed.";
@@ -75,6 +82,7 @@ export function CreateFusionForm() {
   const [story, setStory] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageWarning, setImageWarning] = useState<string | null>(null);
+  const [storyPages, setStoryPages] = useState<FusionPage[]>([]);
 
   useEffect(() => {
     void fetch("/api/style/list")
@@ -99,6 +107,7 @@ export function CreateFusionForm() {
     setStory(null);
     setImageUrl(null);
     setImageWarning(null);
+    setStoryPages([]);
 
     try {
       const res = await fetch("/api/generate/fusion", {
@@ -135,6 +144,7 @@ export function CreateFusionForm() {
         storyText?: unknown;
         outputUrl?: unknown;
         imageError?: unknown;
+        pages?: unknown;
         error?: unknown;
       };
 
@@ -156,14 +166,39 @@ export function CreateFusionForm() {
         typeof data.imageError === "string" && data.imageError.trim()
           ? data.imageError
           : null;
+      const pagesRaw = Array.isArray(data.pages) ? data.pages : [];
+      const pages = pagesRaw
+        .map((page): FusionPage | null => {
+          if (!page || typeof page !== "object") {
+            return null;
+          }
+          const p = page as Record<string, unknown>;
+          const pageNumber = typeof p.pageNumber === "number" ? p.pageNumber : null;
+          const paragraph = typeof p.paragraph === "string" ? p.paragraph : "";
+          if (!pageNumber || !paragraph.trim()) {
+            return null;
+          }
+          const pageImageUrl =
+            typeof p.imageUrl === "string" ? p.imageUrl : p.imageUrl != null ? String(p.imageUrl) : null;
+          const pageImageError =
+            typeof p.imageError === "string" && p.imageError.trim() ? p.imageError : undefined;
+          return {
+            pageNumber,
+            paragraph,
+            imageUrl: pageImageUrl,
+            imageError: pageImageError,
+          };
+        })
+        .filter((page): page is FusionPage => page !== null);
 
       setStory(storyText);
       setImageUrl(outputUrl);
       setImageWarning(imageError);
+      setStoryPages(pages);
       setStatus("done");
       setMessage(
         imageError
-          ? "Story generated. Image generation failed for the current model."
+          ? `Story generated. Image generation failed: ${imageError}`
           : "Generated story + illustration.",
       );
     } catch (err) {
@@ -259,7 +294,7 @@ export function CreateFusionForm() {
         </p>
       )}
 
-      {story && (
+      {story && storyPages.length === 0 && (
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-card">
             <h2 className="text-sm font-semibold text-muted-foreground">Story</h2>
@@ -284,6 +319,41 @@ export function CreateFusionForm() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {storyPages.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Storybook pages
+          </h2>
+          <div className="space-y-6">
+            {storyPages.map((page) => (
+              <article key={page.pageNumber} className="grid gap-4 rounded-2xl border border-border/60 bg-card p-5 shadow-card lg:grid-cols-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Page {page.pageNumber}</h3>
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{page.paragraph}</p>
+                </div>
+                <div className="space-y-3">
+                  {page.imageUrl ? (
+                    <div className="overflow-hidden rounded-xl border border-border/60">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={page.imageUrl} alt={`Illustration for page ${page.pageNumber}`} className="h-auto w-full object-contain" />
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
+                      Image unavailable for this page.
+                    </div>
+                  )}
+                  {page.imageError && (
+                    <p className="whitespace-pre-wrap text-xs text-amber-700 dark:text-amber-200">
+                      {page.imageError}
+                    </p>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       )}
     </div>
