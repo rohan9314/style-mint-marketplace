@@ -9,20 +9,51 @@ import {
   STORE_KEYS,
 } from "@/lib/store/cloud-store";
 
-const dataDir = path.join(process.cwd(), "data");
-const earningsPath = path.join(dataDir, "earnings.json");
+const defaultDataDir = path.join(process.cwd(), "data");
+const fallbackDataDir = path.join("/tmp", "stylemint-data");
+let resolvedDataDir: string | null = null;
+let earningsPath: string = path.join(defaultDataDir, "earnings.json");
 
 let cache: EarningEvent[] | null = null;
 let writeLock: Promise<void> = Promise.resolve();
 
 async function ensureEarningsFile(): Promise<void> {
-  await mkdir(dataDir, { recursive: true });
-  try {
-    await readFile(earningsPath, "utf-8");
-  } catch {
-    const initial: EarningsFile = { events: [] };
-    await writeFile(earningsPath, JSON.stringify(initial, null, 2), "utf-8");
+  const candidates = [
+    process.env.STYLEMINT_DATA_DIR?.trim(),
+    resolvedDataDir,
+    defaultDataDir,
+    fallbackDataDir,
+  ].filter((dir): dir is string => Boolean(dir));
+
+  let lastError: unknown = null;
+  for (const candidate of candidates) {
+    const candidatePath = path.join(candidate, "earnings.json");
+    try {
+      await mkdir(candidate, { recursive: true });
+      try {
+        await readFile(candidatePath, "utf-8");
+      } catch {
+        const initial: EarningsFile = { events: [] };
+        await writeFile(candidatePath, JSON.stringify(initial, null, 2), "utf-8");
+      }
+      resolvedDataDir = candidate;
+      earningsPath = candidatePath;
+      return;
+    } catch (error) {
+      lastError = error;
+    }
   }
+
+  throw new Error(
+    `Unable to initialize earnings storage directory. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+  );
+}
+
+async function ensureEarningsStorageReady(): Promise<void> {
+  if (isCloudStoreEnabled()) {
+    return;
+  }
+  await ensureEarningsFile();
 }
 
 async function loadEvents(): Promise<EarningEvent[]> {
@@ -34,7 +65,7 @@ async function loadEvents(): Promise<EarningEvent[]> {
     cache = remote?.events ?? [];
     return cache;
   }
-  await ensureEarningsFile();
+  await ensureEarningsStorageReady();
   const raw = await readFile(earningsPath, "utf-8");
   const parsed = JSON.parse(raw) as EarningsFile;
   cache = parsed.events;
@@ -48,6 +79,7 @@ async function writeEvents(events: EarningEvent[]): Promise<void> {
     return;
   }
 
+  await ensureEarningsStorageReady();
   const tempPath = `${earningsPath}.tmp`;
   await writeFile(tempPath, JSON.stringify({ events }, null, 2), "utf-8");
   await rename(tempPath, earningsPath);

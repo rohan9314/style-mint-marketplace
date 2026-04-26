@@ -8,20 +8,51 @@ import {
   STORE_KEYS,
 } from "@/lib/store/cloud-store";
 
-const dataDir = path.join(process.cwd(), "data");
-const stylesPath = path.join(dataDir, "styles.json");
+const defaultDataDir = path.join(process.cwd(), "data");
+const fallbackDataDir = path.join("/tmp", "stylemint-data");
+let resolvedDataDir: string | null = null;
+let stylesPath: string = path.join(defaultDataDir, "styles.json");
 
 let cache: Style[] | null = null;
 let writeLock: Promise<void> = Promise.resolve();
 
 async function ensureStylesFile(): Promise<void> {
-  await mkdir(dataDir, { recursive: true });
-  try {
-    await readFile(stylesPath, "utf-8");
-  } catch {
-    const initial: StylesFile = { styles: [] };
-    await writeFile(stylesPath, JSON.stringify(initial, null, 2), "utf-8");
+  const candidates = [
+    process.env.STYLEMINT_DATA_DIR?.trim(),
+    resolvedDataDir,
+    defaultDataDir,
+    fallbackDataDir,
+  ].filter((dir): dir is string => Boolean(dir));
+
+  let lastError: unknown = null;
+  for (const candidate of candidates) {
+    const candidatePath = path.join(candidate, "styles.json");
+    try {
+      await mkdir(candidate, { recursive: true });
+      try {
+        await readFile(candidatePath, "utf-8");
+      } catch {
+        const initial: StylesFile = { styles: [] };
+        await writeFile(candidatePath, JSON.stringify(initial, null, 2), "utf-8");
+      }
+      resolvedDataDir = candidate;
+      stylesPath = candidatePath;
+      return;
+    } catch (error) {
+      lastError = error;
+    }
   }
+
+  throw new Error(
+    `Unable to initialize styles storage directory. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+  );
+}
+
+async function ensureStylesStorageReady(): Promise<void> {
+  if (isCloudStoreEnabled()) {
+    return;
+  }
+  await ensureStylesFile();
 }
 
 export async function loadStyles(): Promise<Style[]> {
@@ -35,7 +66,7 @@ export async function loadStyles(): Promise<Style[]> {
     return cache;
   }
 
-  await ensureStylesFile();
+  await ensureStylesStorageReady();
   const raw = await readFile(stylesPath, "utf-8");
   const parsed = JSON.parse(raw) as StylesFile;
   cache = parsed.styles;
@@ -43,6 +74,7 @@ export async function loadStyles(): Promise<Style[]> {
 }
 
 async function atomicWrite(styles: Style[]): Promise<void> {
+  await ensureStylesStorageReady();
   const tempPath = `${stylesPath}.tmp`;
   await writeFile(tempPath, JSON.stringify({ styles }, null, 2), "utf-8");
   await rename(tempPath, stylesPath);
@@ -53,7 +85,6 @@ export async function saveStyles(styles: Style[]): Promise<void> {
     if (isCloudStoreEnabled()) {
       await cloudSet<StylesFile>(STORE_KEYS.styles, { styles });
     } else {
-      await ensureStylesFile();
       await atomicWrite(styles);
     }
     cache = styles;
