@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 const MAX_IMAGES = 8;
 const MAX_WRITING_SAMPLES = 5;
@@ -14,42 +14,41 @@ interface ManagedStyle {
   pricePerGenerationSats: number;
 }
 
-async function fileToDataUrl(file: File): Promise<string> {
-  const rawDataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-  return new Promise<string>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      const maxSize = 1024;
-      const ratio = Math.min(maxSize / image.width, maxSize / image.height, 1);
-      const width = Math.round(image.width * ratio);
-      const height = Math.round(image.height * ratio);
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("Unable to process image."));
-        return;
-      }
-
-      ctx.drawImage(image, 0, 0, width, height);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    image.onerror = reject;
-    image.src = rawDataUrl;
-  });
-}
-
 async function fileToText(file: File): Promise<string> {
   return file.text();
+}
+
+async function parseJsonResponse<T extends object = Record<string, unknown>>(
+  response: Response,
+  endpoint?: string,
+): Promise<T> {
+  const text = await response.text();
+  const requestTarget = endpoint || response.url || "unknown endpoint";
+
+  if (!response.ok) {
+    console.error("[api-failure]", {
+      requestUrl: requestTarget,
+      statusCode: response.status,
+      responseText: text.slice(0, 1000),
+    });
+  }
+
+  if (!text.trim()) {
+    if (!response.ok) {
+      throw new Error(
+        `Request failed with status ${response.status} for ${requestTarget} and empty response body.`,
+      );
+    }
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(
+      `Request returned invalid JSON from ${requestTarget}. Status: ${response.status}. Body: ${text.slice(0, 500)}`,
+    );
+  }
 }
 
 export function CreatorStudioForm() {
@@ -63,9 +62,11 @@ export function CreatorStudioForm() {
   const [writingFiles, setWritingFiles] = useState<File[]>([]);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [uploadWarning, setUploadWarning] = useState("");
   const [createdStyleId, setCreatedStyleId] = useState<string | null>(null);
   const [myStyles, setMyStyles] = useState<ManagedStyle[]>([]);
   const [loadingMyStyles, setLoadingMyStyles] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const previews = useMemo(
     () => files.map((file) => ({ name: file.name, previewUrl: URL.createObjectURL(file) })),
@@ -78,6 +79,39 @@ export function CreatorStudioForm() {
     };
   }, [previews]);
 
+  function handleAddReferenceImages(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    const remainingSlots = MAX_IMAGES - files.length;
+    if (remainingSlots <= 0) {
+      setUploadWarning(`You can upload up to ${MAX_IMAGES} reference images.`);
+      event.target.value = "";
+      return;
+    }
+
+    const imagesToAdd = selectedFiles.slice(0, remainingSlots);
+    setFiles((prev) => [...prev, ...imagesToAdd]);
+
+    if (selectedFiles.length > remainingSlots) {
+      setUploadWarning(
+        `Only ${remainingSlots} image${remainingSlots === 1 ? "" : "s"} added. You can upload up to ${MAX_IMAGES} total.`,
+      );
+    } else {
+      setUploadWarning("");
+    }
+
+    // Allow selecting the same file again after removing it.
+    event.target.value = "";
+  }
+
+  function handleRemoveReferenceImage(indexToRemove: number) {
+    setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setUploadWarning("");
+  }
+
   async function refreshMyStyles(targetCreatorId?: string) {
     const creatorId =
       targetCreatorId ??
@@ -88,12 +122,16 @@ export function CreatorStudioForm() {
 
     setLoadingMyStyles(true);
     try {
-      const res = await fetch(`/api/style/list?full=1&creatorId=${encodeURIComponent(creatorId)}`);
+      const endpoint = `/api/style/list?full=1&creatorId=${encodeURIComponent(creatorId)}`;
+      const res = await fetch(endpoint);
+      const payload = await parseJsonResponse<{ styles?: ManagedStyle[]; error?: string }>(
+        res,
+        endpoint,
+      );
       if (!res.ok) {
-        throw new Error("Failed loading your styles.");
+        throw new Error(payload.error ?? "Failed loading your styles.");
       }
-      const payload = (await res.json()) as { styles: ManagedStyle[] };
-      setMyStyles(payload.styles);
+      setMyStyles(Array.isArray(payload.styles) ? payload.styles : []);
     } finally {
       setLoadingMyStyles(false);
     }
@@ -115,7 +153,6 @@ export function CreatorStudioForm() {
         if (files.length < 3) {
           throw new Error("Upload at least 3 reference images.");
         }
-        samples = await Promise.all(files.slice(0, MAX_IMAGES).map(fileToDataUrl));
       } else {
         const pastedSamples = writingText
           .split(/\n\s*\n/g)
@@ -137,27 +174,46 @@ export function CreatorStudioForm() {
 
       const creatorId = `creator_${creatorName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
 
-      const res = await fetch("/api/style/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          kind,
-          creatorId,
-          creatorName: creatorName.trim(),
-          title: title.trim(),
-          description: description.trim(),
-          pricePerGenerationSats: priceSats,
-          samples,
-        }),
-      });
+      const endpoint = "/api/style/create";
+      const res =
+        kind === "art"
+          ? await (async () => {
+              const formData = new FormData();
+              formData.append("creatorName", creatorName.trim());
+              formData.append("styleTitle", title.trim());
+              formData.append("styleDescription", description.trim());
+              formData.append("priceSats", String(priceSats));
+              files.slice(0, MAX_IMAGES).forEach((file) => {
+                formData.append("referenceImages", file);
+              });
 
-      const payload = (await res.json()) as { styleId?: string; error?: string };
+              return fetch(endpoint, {
+                method: "POST",
+                body: formData,
+              });
+            })()
+          : await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                kind,
+                creatorId,
+                creatorName: creatorName.trim(),
+                title: title.trim(),
+                description: description.trim(),
+                pricePerGenerationSats: priceSats,
+                samples,
+              }),
+            });
+
+      const payload = await parseJsonResponse<{ styleId?: string; error?: string }>(res, endpoint);
       if (!res.ok) {
         throw new Error(payload.error ?? "Failed to create style.");
       }
 
       setStatus("success");
       setCreatedStyleId(payload.styleId ?? null);
+      setUploadWarning("");
       setMessage(
         kind === "art"
           ? "Art style agent minted and deployed to marketplace."
@@ -205,20 +261,22 @@ export function CreatorStudioForm() {
     setStatus("submitting");
     setMessage("");
     try {
-      const res = await fetch("/api/demo/seed", {
+      const endpoint = "/api/demo/seed";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ replaceExisting: false }),
       });
+      const payload = await parseJsonResponse<{ added?: number; error?: string }>(res, endpoint);
       if (!res.ok) {
-        throw new Error("Failed to seed demo styles.");
+        throw new Error(payload.error ?? "Failed to seed demo styles.");
       }
-      const payload = (await res.json()) as { added: number };
       setStatus("success");
+      const addedCount = typeof payload.added === "number" ? payload.added : 0;
       setMessage(
-        payload.added === 0
+        addedCount === 0
           ? "Demo styles already exist."
-          : `Added ${payload.added} demo styles.`,
+          : `Added ${addedCount} demo styles.`,
       );
       await refreshMyStyles();
     } catch (error) {
@@ -319,25 +377,49 @@ export function CreatorStudioForm() {
 
       {kind === "art" ? (
         <>
-          <label className="space-y-1.5 text-sm">
+          <div className="space-y-1.5 text-sm">
             <span className="font-medium">Reference Images (3-8)</span>
             <input
               suppressHydrationWarning
+              ref={imageInputRef}
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, MAX_IMAGES))}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2"
-              required={kind === "art"}
+              onChange={handleAddReferenceImages}
+              className="hidden"
             />
-          </label>
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-left hover:bg-muted/50"
+            >
+              Add Reference Images
+            </button>
+            <p className="text-xs text-muted-foreground">
+              3-8 images required. You currently have {files.length}.
+            </p>
+            {uploadWarning && <p className="text-xs text-amber-700">{uploadWarning}</p>}
+          </div>
 
           {previews.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {previews.map((item) => (
-                <div key={item.name} className="overflow-hidden rounded-xl border border-border/60">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {previews.map((item, index) => (
+                <div
+                  key={`${item.name}-${index}`}
+                  className="overflow-hidden rounded-xl border border-border/60 bg-background"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={item.previewUrl} alt={item.name} className="h-24 w-full object-cover" />
+                  <div className="flex items-center justify-between gap-2 px-2 py-2">
+                    <p className="truncate text-xs text-muted-foreground">{item.name || "Image file"}</p>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveReferenceImage(index)}
+                      className="rounded-full border border-red-300 px-2 py-1 text-xs font-semibold text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -379,7 +461,7 @@ Sample 2..."
       <button
         suppressHydrationWarning
         type="submit"
-        disabled={status === "submitting"}
+        disabled={status === "submitting" || (kind === "art" && files.length < 3)}
         className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
       >
         {status === "submitting" ? "Training and deploying..." : `Create and Deploy ${kind === "art" ? "Art" : "Writer"} Agent`}

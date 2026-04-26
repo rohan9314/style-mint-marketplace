@@ -30,6 +30,15 @@ const IMAGE_MODELS = [
   "gemini-3.1-flash-image-preview",
 ] as const;
 
+let hasLoggedApiKeyLoaded = false;
+
+function logApiKeyLoaded(): void {
+  if (!hasLoggedApiKeyLoaded) {
+    console.info("Gemini API key loaded successfully");
+    hasLoggedApiKeyLoaded = true;
+  }
+}
+
 function getTextApiKey(): string {
   const candidates = [
     process.env.GOOGLE_GEMINI_API_KEY,
@@ -45,6 +54,7 @@ function getTextApiKey(): string {
       "Missing Gemini API key. Set GOOGLE_GEMINI_API_KEY or GEMINI_API_KEY.",
     );
   }
+  logApiKeyLoaded();
   return key;
 }
 
@@ -63,6 +73,7 @@ function getImageApiKey(): string {
       "Missing image API key. Set NANO_BANANA_API_KEY or GOOGLE_GEMINI_API_KEY.",
     );
   }
+  logApiKeyLoaded();
   return key;
 }
 

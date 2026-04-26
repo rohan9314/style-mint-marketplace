@@ -10,6 +10,17 @@ interface FusionBody {
   prompt: string;
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+const hasMdkAccessToken = Boolean(process.env.MDK_ACCESS_TOKEN?.trim());
+const skipL402 = process.env.SKIP_L402_DEV === "1";
+const paymentsEnabled = hasMdkAccessToken && !skipL402;
+
+if (!hasMdkAccessToken && isProduction) {
+  throw new Error("MDK_ACCESS_TOKEN is not configured");
+}
+if (!hasMdkAccessToken && !isProduction) {
+  console.info("Payment mode disabled in local development");
+}
 const handler = async (req: Request): Promise<Response> => {
   try {
     const body = (await req.json()) as FusionBody;
@@ -92,23 +103,25 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-const paidPOST = withPayment(
-  {
-    amount: async (req: Request) => {
-      const body = (await req.clone().json()) as FusionBody;
-      const art = await getStyleById(body.artStyleId);
-      const writing = await getStyleById(body.writingStyleId);
-      if (!art || art.kind !== "art") {
-        throw new Error(`Unknown artStyleId: ${body.artStyleId}`);
-      }
-      if (!writing || writing.kind !== "writing") {
-        throw new Error(`Unknown writingStyleId: ${body.writingStyleId}`);
-      }
-      return art.pricePerGenerationSats + writing.pricePerGenerationSats;
-    },
-    currency: "SAT",
-  },
-  handler,
-);
+const paidPOST = paymentsEnabled
+  ? withPayment(
+      {
+        amount: async (req: Request) => {
+          const body = (await req.clone().json()) as FusionBody;
+          const art = await getStyleById(body.artStyleId);
+          const writing = await getStyleById(body.writingStyleId);
+          if (!art || art.kind !== "art") {
+            throw new Error(`Unknown artStyleId: ${body.artStyleId}`);
+          }
+          if (!writing || writing.kind !== "writing") {
+            throw new Error(`Unknown writingStyleId: ${body.writingStyleId}`);
+          }
+          return art.pricePerGenerationSats + writing.pricePerGenerationSats;
+        },
+        currency: "SAT",
+      },
+      handler,
+    )
+  : handler;
 
 export const POST = paidPOST;

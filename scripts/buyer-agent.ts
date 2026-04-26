@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { MoneyDevKitNode } from "@moneydevkit/core";
 
-const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+const BASE =
+  process.env.APP_BASE_URL ??
+  process.env.NEXT_PUBLIC_APP_BASE_URL ??
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  "http://localhost:3000";
 
 async function main(): Promise<void> {
   const [, , styleId, prompt] = process.argv;

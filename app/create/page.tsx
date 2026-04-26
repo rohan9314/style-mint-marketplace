@@ -3,6 +3,15 @@ import { BookOpen, Palette } from "lucide-react";
 import { CreateFusionForm } from "./create-fusion-form";
 
 export default function CreateFusionPage() {
+  const paymentsEnabled = Boolean(
+    process.env.MDK_ACCESS_TOKEN?.trim() && process.env.MDK_MNEMONIC?.trim(),
+  );
+  const appBaseUrl =
+    process.env.APP_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() ||
+    "";
+
   return (
     <main className="min-h-screen bg-gradient-soft">
       <div className="mx-auto w-full max-w-4xl px-6 py-10 md:py-14">
@@ -20,7 +29,7 @@ export default function CreateFusionPage() {
         </p>
 
         <div className="mt-8 rounded-2xl border border-border/60 bg-card p-6 shadow-card md:p-8">
-          <CreateFusionForm />
+          <CreateFusionForm paymentsEnabled={paymentsEnabled} appBaseUrl={appBaseUrl} />
         </div>
       </div>
     </main>
