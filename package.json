@@ -11,6 +11,7 @@
     "buyer-agent": "tsx scripts/buyer-agent.ts"
   },
   "dependencies": {
+    "@moneydevkit/lightning-js": "^0.1.81",
     "@moneydevkit/nextjs": "^0.16.0",
     "@vercel/kv": "^3.0.0",
     "dotenv": "^17.4.2",
